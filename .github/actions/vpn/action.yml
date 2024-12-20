@@ -1,0 +1,53 @@
+
+
+name: VPN Setup and Connect Workflow
+description: 'This workflow sets up openconnect VPN and connects runner to FortiClient VPN server'
+
+on:
+  workflow_call:
+    inputs:
+      ip:
+        description: 'VPN IP Address'
+        required: true
+        default: 'vpn.example.com'
+        type: string
+      port:
+        description: 'VPN Port'
+        required: true
+        default: '443'
+        type: string
+      username:
+        description: 'VPN Username'
+        required: true
+        default: 'user'
+        type: string
+      password:
+        description: 'VPN Password'
+        required: true
+        default: 'password'
+        type: string
+      host_to_ping:
+        description: 'Host to ping to test VPN connection'
+        required: true
+        default: 'google.com'
+        type: string
+
+runs:
+  using: "composite"
+  steps:
+
+      - name: Install openconnect ppa
+        shell: bash
+        run: sudo add-apt-repository ppa:dwmw2/openconnect -y && sudo apt -qq update
+      
+      - name: Install openconnect
+        shell: bash
+        run: sudo apt install -yq openconnect
+      
+      - name: Connect to VPN
+        shell: bash
+        run: echo '${{ inputs.password }}' | sudo openconnect -u ${{ inputs.username }} --passwd-on-stdin --protocol=fortinet ${{ inputs.ip }}:${{ inputs.port }} --background
+
+      - name: Test if connected to VPN
+        shell: bash
+        run: ping -c4 ${{ inputs.host_to_ping }}
